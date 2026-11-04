@@ -4,7 +4,7 @@ g = 9.8;
 b_f = 0;
 % Mass of the Body
 m_b = 0.381 .* 10.^3;
-% Radius of the Body
+% wheel’s center - body’s center of mass distance
 l_b = 0.112;
 % moment of inertia of the Body
 I_b = 0.00616 .* 10.^3;
