@@ -3,17 +3,17 @@ fprintf('loading the physical parameters...');
 g = 9.8;
 b_f = 0;
 % Mass of the Body
-m_b = 0.381 .* 10.^3;
+m_b = 0.381;
 % wheel’s center - body’s center of mass distance
 l_b = 0.112;
 % moment of inertia of the Body
-I_b = 0.00616 .* 10.^3;
+I_b = 0.00616;
 % Mass of the wheel
-m_w = 0.036 .* 10.^3;
+m_w = 0.036;
 % radius of the wheel 
 l_w = 0.021;
 % moment of inertia of the wheel
-I_w = 0.00000746 .* 10.^3;
+I_w = 0.00000746;
 % motor electrical resistance 
 R_m = 4.4;
 % motor electrical inductance 
