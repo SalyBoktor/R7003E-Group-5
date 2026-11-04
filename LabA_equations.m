@@ -1,12 +1,30 @@
 %% 3.1 Derive the Equations of Motion
 
-syms x_b(t) y_b(t) theta_b(t) F_x(t) F_y(t) T_m(t) T_f(t) 
-syms m_b g I_b l_b
+% Dynamic symbols for later input
+syms x_w(t) theta_b(t) v_m(t)
 
-eq4 = m_b * diff(x_b, t, 2) == F_x;
-eq5 = m_b * diff(y_b, t, 2) == F_y - m_b * g;
-eq6 = I_b * diff(theta_b, t, 2) == -T_m + T_f + F_y*l_b*sin(theta_b) - F_x*l_b*cos(theta_b);
+% velocity of wheel
+theta_w_dot = diff(x_w, t)/l_w;
+% velocity of body
+theta_b_dot = diff(theta_b, t);
+% velocity of motor
+theta_m_dot = theta_w_dot - theta_b_dot;
+% horizontal acceleration of wheel
+x_w_ddot    = diff(x_w, t, 2);
+% acceleration of body
+theta_b_ddot = diff(theta_b, t, 2);
 
+% First Equation:
+eq1_left1 = (m_w + m_b + I_w/(l_w^2)) * x_w_ddot;
+eq1_left2 = + m_b * l_b * theta_b_ddot * cos(theta_b) - m_b * l_b * (theta_b_dot^2) * sin(theta_b);
+eq1_right = (T_m - T_f)/l_w;
+eq1 = eq1_left - eq1_left2 == eq1_right;
+
+% Task 3.1.4: Motor Torque (T_m) and Friction Torque (T_f)
+
+T_f = b_f * ((diff(x_w,t) / l_w) - diff(theta_b, t));
+
+T_m = (K_t / R_m) * v_m - (K_e * K_t / R_m) * ((diff(x_w,t) / l_w) - diff(theta_b, t)); 
 
 %% 3.2 Linearize the Equations of Motion
 
