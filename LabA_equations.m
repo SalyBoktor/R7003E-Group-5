@@ -14,20 +14,18 @@ x_w_ddot    = diff(x_w, t, 2);
 % acceleration of body
 theta_b_ddot = diff(theta_b, t, 2);
 
+% Task 3.1.4: Motor Torque (T_m) and Friction Torque (T_f)
+
+T_f = b_f * ((diff(x_w,t) / l_w) - diff(theta_b, t));
+T_m = (K_t / R_m) * v_m - (K_e * K_t / R_m) * ((diff(x_w,t) / l_w) - diff(theta_b, t)); 
+
 % First Equation:
 eq1_left1 = (m_w + m_b + I_w/(l_w^2)) * x_w_ddot;
 eq1_left2 = + m_b * l_b * theta_b_ddot * cos(theta_b) - m_b * l_b * (theta_b_dot^2) * sin(theta_b);
 eq1_right = (T_m - T_f)/l_w;
 eq1 = eq1_left - eq1_left2 == eq1_right;
 
-% Task 3.1.4: Motor Torque (T_m) and Friction Torque (T_f)
-
-T_f = b_f * ((diff(x_w,t) / l_w) - diff(theta_b, t));
-
-T_m = (K_t / R_m) * v_m - (K_e * K_t / R_m) * ((diff(x_w,t) / l_w) - diff(theta_b, t)); 
-
 %% 3.2 Linearize the Equations of Motion
-
 
 %% 3.3 Write the linearized Equations of Motion in State-Space form
 
