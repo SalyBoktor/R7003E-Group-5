@@ -28,6 +28,7 @@ K_t = 0.470;
 
 %% 3.1 Derive the Equations of Motion
 
+%% 3.2 Linearize the Equations of Motion
 
 %% 3.3 Write the linearized Equations of Motion in State-Space form
 
