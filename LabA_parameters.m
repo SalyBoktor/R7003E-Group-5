@@ -25,6 +25,8 @@ K_e = 0.444;
 % Motor torque constant
 K_t = 0.470;
 
+fprintf('loaded!');
+
 
 %% 3.1 Derive the Equations of Motion
 
