@@ -1,22 +1,46 @@
 %% 3.1 Derive the Equations of Motion
 
-syms x_b(t) y_b(t) theta_b(t) F_x(t) F_y(t) T_m(t) T_f(t) 
-syms m_b g I_b l_b
-syms x_ddot_w y_ddot_w
+% Dynamic symbols for later input
+syms x_w(t) theta_b(t) v_m(t)
 
-eq1 = m_w * x_ddot_w == F_t - F_x;
-eq2 = m_w * y_ddot_w == N - m_w * g - F_y == 0;
-eq3 = I_w * theta_ddot_w == T_m - T_f - l_w * F_t;
+% velocity of wheel
+theta_w_dot = diff(x_w, t)/l_w;
+% velocity of body
+theta_b_dot = diff(theta_b, t);
+% velocity of motor
+theta_m_dot = theta_w_dot - theta_b_dot;
+% horizontal acceleration of wheel
+x_w_ddot    = diff(x_w, t, 2);
+% acceleration of body
+theta_b_ddot = diff(theta_b, t, 2);
 
-eq4 = m_b * diff(x_b, t, 2) == F_x;
-eq5 = m_b * diff(y_b, t, 2) == F_y - m_b * g;
-eq6 = I_b * diff(theta_b, t, 2) == -T_m + T_f + F_y*l_b*sin(theta_b) - F_x*l_b*cos(theta_b);
+% Task 3.1.4: Motor Torque (T_m) and Friction Torque (T_f)
 
+T_f = b_f * ((diff(x_w,t) / l_w) - diff(theta_b, t));
+T_m = (K_t / R_m) * v_m - (K_e * K_t / R_m) * ((diff(x_w,t) / l_w) - diff(theta_b, t)); 
+
+% First Equation:
+eq1_left1 = (m_w + m_b + I_w/(l_w^2)) * x_w_ddot;
+eq1_left2 = + m_b * l_b * theta_b_ddot * cos(theta_b) - m_b * l_b * (theta_b_dot^2) * sin(theta_b);
+eq1_right = (T_m - T_f)/l_w;
+eq1 = eq1_left - eq1_left2 == eq1_right;
 
 %% 3.2 Linearize the Equations of Motion
 
+% Choosing the Linearization points (all zero to keep the fella uppright)
+theta_b(t) = 0;
+theta_b_dot = 0;
+theta_b_ddot = 0;
+
+% Linearize the parts of the equation that is non-linear
+eq1_lin_left2 = + m_b * l_b * theta_b_ddot;
+
+% Final Linearized EOM
+eq1_lin = eq1_left1 - eq1_lin_left2 == eq1_right;
 
 %% 3.3 Write the linearized Equations of Motion in State-Space form
+
+
 
 %% 3.4 Determine the transfer function relative to system
 

@@ -27,7 +27,20 @@ eq1 = eq1_left - eq1_left2 == eq1_right;
 
 %% 3.2 Linearize the Equations of Motion
 
+% Choosing the Linearization points (all zero to keep the fella uppright)
+theta_b(t) = 0;
+theta_b_dot = 0;
+theta_b_ddot = 0;
+
+% Linearize the parts of the equation that is non-linear
+eq1_lin_left2 = + m_b * l_b * theta_b_ddot;
+
+% Final Linearized EOM
+eq1_lin = eq1_left1 - eq1_lin_left2 == eq1_right;
+
 %% 3.3 Write the linearized Equations of Motion in State-Space form
+
+
 
 %% 3.4 Determine the transfer function relative to system
 
