@@ -98,9 +98,6 @@ D = 0;
 %% 3.4 Determine the transfer function relative to system
 disp('3.4 Computing the transfer function')
 
-A = double(subs(A));
-B = double(subs(B));
-
 % State-Space System
 sys = ss(A, B, C, D);
 
