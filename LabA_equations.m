@@ -122,25 +122,13 @@ uncontrollable_states = length(A) - rank(Co)
 %% 3.5 Design a PID controller stabilizing the TF
 disp('3.5 Designing the PID controller stabilizing the TF')
 
-
 % Extract plant numerator and denominator data
 [num_g, den_g] = tfdata(G, 'v');
 
 % Find the leading non-zero numerator coefficient (retaining its sign)
 lead_idx = find(num_g ~= 0, 1);
-b2 = num_g(lead_idx); % This is -90.0275
+b2 = num_g(lead_idx);
 
-% 1. Choose 5 Desired Closed-Loop Poles 
-% (Plant is 4th order + 1 integrator = 5th order system total)
-p_desired = [-10, -12, -15, -20, -25]; 
-
-% 2. Expand into a 5th-degree target polynomial: s^5 + d4*s^4 + d3*s^3 + d2*s^2 + d1*s + d0
-d_poly = poly(p_desired);
-
-% Extract target coefficients from the desired polynomial
-d4 = d_poly(2);
-d3 = d_poly(3);
-d2 = d_poly(4);
 
 %% 3.6 Model the effect of disturbing the robot
 disp('3.6 Modelling the effect of disturbing the robot')
