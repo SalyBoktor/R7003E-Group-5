@@ -125,10 +125,6 @@ disp('3.5 Designing the PID controller stabilizing the TF')
 % Extract plant numerator and denominator data
 [num_g, den_g] = tfdata(G, 'v');
 
-% Find the leading non-zero numerator coefficient (retaining its sign)
-lead_idx = find(num_g ~= 0, 1);
-b2 = num_g(lead_idx);
-
 
 %% 3.6 Model the effect of disturbing the robot
 disp('3.6 Modelling the effect of disturbing the robot')
