@@ -187,6 +187,16 @@ T_closed = feedback(C_pid * G, 1);
 %% 3.6 Model the effect of disturbing the robot
 disp('3.6 Modelling the effect of disturbing the robot')
 
+Beta_d = [Beta(:,1), [l_b; l_w]];
+Bd_sub = T \ Beta_d;
+Bd = [0,           0;
+    Bd_sub(1,1), Bd_sub(1,2);
+    0,           0;
+    Bd_sub(2,1), Bd_sub(2,2)];
+
+Cf = eye(4);
+D_bd = zeros(4, 2);
+
 %% 3.7 Check if everything is working as it should be
 disp('3.7 Checking if everything is working as it should be')
 
