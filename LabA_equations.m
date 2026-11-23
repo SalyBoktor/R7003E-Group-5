@@ -200,5 +200,39 @@ D_bd = zeros(4, 2);
 %% 3.7 Check if everything is working as it should be
 disp('3.7 Checking if everything is working as it should be')
 
+% Simulate LabA_LinearizedBot
+simOut = sim('LabA_LinearizedBot');
+
+% % Closed-loop step/impulse check
+% figure('Name', '3.7 Closed-Loop Check');
+% subplot(2,1,1);
+% step(T_closed);
+% title('Closed-Loop Step Response (T\_closed)');
+% grid on;
+% 
+% subplot(2,1,2);
+% impulse(feedback(G, C_pid));
+% title('Disturbance-to-Output Impulse Response');
+% grid on;
+
 %% 3.8 Convert the controller to the discrete domain
 disp('3.8 Converting the controller to the discrete domain')
+
+% Use G_red
+C_cont = pid(Kp_val, Ki_val, Kd_val);
+T_cl = feedback(C_cont * G_red, 1);
+
+wb = bandwidth(T_cl); % Bandwidth in rad/s
+fprintf('Closed-loop bandwidth wb = %.4f rad/s\n', wb);
+
+samplingstime = 2*pi / (20 * wb);
+fprintf('Calculated sampling time Ts = %.6f s\n', samplingstime);
+
+% figure('Name', '3.8 Closed-Loop Bode Plot');
+% bodeplot(T_cl);
+% grid on;
+% 
+% % Discretize the continuous PID controller
+% C_disc = c2d(C_cont, samplingstime, 'tustin');
+% disp('Discrete PID controller C_disc(z):');
+% C_disc
