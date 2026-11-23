@@ -95,6 +95,10 @@ B = [0;
 C = [0, 0, 1, 0];
 D = 0;
 
+B_sim = [B, zeros(4, 1)];
+C_sim = eye(4);
+D_sim = zeros(4, 2);
+
 %% 3.4 Determine the transfer function relative to system
 disp('3.4 Computing the transfer function')
 
@@ -122,9 +126,63 @@ uncontrollable_states = length(A) - rank(Co)
 %% 3.5 Design a PID controller stabilizing the TF
 disp('3.5 Designing the PID controller stabilizing the TF')
 
-% Extract plant numerator and denominator data
-[num_g, den_g] = tfdata(G, 'v');
+% 3rd-order reduced TF
+[num_raw, den_raw] = tfdata(G, 'v');
+num_raw(abs(num_raw) < 1e-9) = 0;
+den_raw(abs(den_raw) < 1e-9) = 0;
 
+num_red = num_raw(1:end-1); % [0, -90.03, 0, 0]
+den_red = den_raw(1:end-1); % [1, 475, -62.02, -15370]
+
+% Normalize denominator to monic if needed
+lead_den = den_red(1);
+num_red = num_red / lead_den;
+den_red = den_red / lead_den;
+
+G_red = tf(num_red, den_red);
+
+% Keep stable open-loop poles (Re < 0), mirror unstable poles (Re > 0)
+p_ol = pole(G_red);
+stable_poles = p_ol(real(p_ol) < 0);
+mirrored_unstable_poles = -p_ol(real(p_ol) > 0);
+desired_poles = [stable_poles(:); mirrored_unstable_poles(:)];
+
+assert(numel(desired_poles) == 3, ...
+    'Expected 3 desired poles for 3rd-order matching, got %d.', numel(desired_poles));
+
+% Target monic polynomial: s^3 + alpha1*s^2 + alpha2*s + alpha3
+A_des = poly(desired_poles);
+
+% Solve for Kd, Kp, Ki
+% PID terms enter at s^2, s^1, s^0 scaled by b1.
+b1 = num_red(end - 1);
+assert(abs(b1) > 1e-9, 'Reduced s^1 numerator coefficient is too close to zero.');
+
+a1 = den_red(2);
+a2 = den_red(3);
+a3 = den_red(4);
+
+Kd_val = (A_des(2) - a1) / b1;
+Kp_val = (A_des(3) - a2) / b1;
+Ki_val = (A_des(4) - a3) / b1;
+
+fprintf('Kp_val = %.4f | Ki_val = %.4f | Kd_val = %.4f\n', Kp_val, Ki_val, Kd_val);
+
+% Verify closed-loop roots
+cl_char_poly = [1, a1 + b1*Kd_val, a2 + b1*Kp_val, a3 + b1*Ki_val];
+cl_roots = roots(cl_char_poly);
+disp('Controlled closed-loop roots:');
+disp(cl_roots);
+
+if all(real(cl_roots) < 0)
+    disp('Status: All 3 controlled roots have negative real part.');
+else
+    warning('At least one controlled root has Re(s) >= 0.');
+end
+
+% Build PID controller and closed-loop TF
+C_pid = pid(Kp_val, Ki_val, Kd_val);
+T_closed = feedback(C_pid * G, 1);
 
 %% 3.6 Model the effect of disturbing the robot
 disp('3.6 Modelling the effect of disturbing the robot')
