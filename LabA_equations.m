@@ -77,8 +77,6 @@ Alpha = [a_11, a_12, a_13, a_14;
 Beta = [beta_1;
         beta_2];
 
-T_inv = inv(T);
-
 A_acc = T \ Alpha;
 
 A = [0, 1, 0, 0;
@@ -108,6 +106,7 @@ disp('3.4 Computing the transfer function')
 sys = ss(A, B, C, D);
 
 % State-Space to Transfer Function G(s)
+syms s
 [num, den] = ss2tf(A, B, C, D);
 G = tf(num, den);
 G = sys;
@@ -212,9 +211,46 @@ wb = bandwidth(T_cl); % Bandwidth in rad/s
 
 samplingstime = 2*pi / (20 * wb);
 
+% Automate plots for figures (adapted from Section 9.3)
+close all;
+
+open_system('LabA_LinearizedBot');
+saveas(get_param('LabA_LinearizedBot', 'Handle'), 'LabA_LinearizedBot_Simulink_diagram.eps');
 
 
-% figure('Name', '3.8 Closed-Loop Bode Plot');
- %bodeplot(T_cl); %kanske inte behövs då vi får samplingtime av 2*pi/(20*bandwidth)
-% grid on;
- 
+print('-sLabA_LinearizedBot', '-depsc2', '-r300', 'LabA_LinearizedBot_Simulink_diagram.eps');
+
+sim('LabA_LinearizedBot');
+close_system('LabA_LinearizedBot');
+
+% Replace figure(1) .. figure(4) with this single combined figure:
+figCombined = figure('Name', 'LabA_LinearizedBot_All');
+tl = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+
+nexttile;
+plot(x_w.time, x_w.signals.values);
+title('x_w'); xlabel('time'); ylabel('meters');
+grid on;
+
+nexttile;
+plot(theta_b.time, theta_b.signals.values * 180 / pi);
+title('\theta_b'); xlabel('time'); ylabel('degrees');
+grid on;
+
+nexttile;
+plot(d.time, d.signals.values);
+title('d'); xlabel('time'); ylabel('Newton');
+xlim([0 5]);
+ylim([0 0.2]);
+grid on;
+
+nexttile;
+plot(v_m.time, v_m.signals.values);
+title('v_m'); xlabel('time'); ylabel('Volt');
+grid on;
+
+set(figCombined, 'Units', 'centimeters', 'Position', [1 1 20 12]);
+set(figCombined, 'PaperPositionMode', 'auto');
+print(figCombined, '-depsc2', '-r300', 'LabA_LinearizedBot_Simulink_all.eps');
+
+
