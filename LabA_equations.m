@@ -214,43 +214,34 @@ samplingstime = 2*pi / (20 * wb);
 % Automate plots for figures (adapted from Section 9.3)
 close all;
 
-open_system('LabA_LinearizedBot');
-saveas(get_param('LabA_LinearizedBot', 'Handle'), 'LabA_LinearizedBot_Simulink_diagram.eps');
+open_system('LabA_LinearizedBotVsSimulator');
+saveas(get_param('LabA_LinearizedBotVsSimulator', 'Handle'), 'LabA_LinearizedBotVsSimulator_Simulink_diagram.eps');
 
 
-print('-sLabA_LinearizedBot', '-depsc2', '-r300', 'LabA_LinearizedBot_Simulink_diagram.eps');
+print('-sLabA_LinearizedBotVsSimulator', '-depsc2', '-r300', 'LabA_LinearizedBotVsSimulator_Simulink_diagram.eps');
 
-sim('LabA_LinearizedBot');
-close_system('LabA_LinearizedBot');
+sim('LabA_LinearizedBotVsSimulator');
+close_system('LabA_LinearizedVsSimulator');
 
 % Replace figure(1) .. figure(4) with this single combined figure:
 figCombined = figure('Name', 'LabA_LinearizedBot_All');
 tl = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
 
 nexttile;
-plot(x_w.time, x_w.signals.values);
-title('x_w'); xlabel('time'); ylabel('meters');
-grid on;
-
-nexttile;
 plot(theta_b.time, theta_b.signals.values * 180 / pi);
 title('\theta_b'); xlabel('time'); ylabel('degrees');
+legend('Balancing Robot Simulation', 'Linearized Balancing Robot', 'Location', 'northeast')
 grid on;
 
-nexttile;
-plot(d.time, d.signals.values);
-title('d'); xlabel('time'); ylabel('Newton');
-xlim([0 5]);
-ylim([0 0.2]);
-grid on;
 
 nexttile;
 plot(v_m.time, v_m.signals.values);
 title('v_m'); xlabel('time'); ylabel('Volt');
+legend('Balancing Robot Simulation', 'Linearized Balancing Robot', 'Location', 'northeast')
 grid on;
 
 set(figCombined, 'Units', 'centimeters', 'Position', [1 1 20 12]);
 set(figCombined, 'PaperPositionMode', 'auto');
-print(figCombined, '-depsc2', '-r300', 'LabA_LinearizedBot_Simulink_all.eps');
+print(figCombined, '-depsc2', '-r300', 'LabA_LinearizedBotVsSimulator_Descrete_Simulink_all.eps');
 
 
