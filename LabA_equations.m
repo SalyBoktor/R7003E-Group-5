@@ -20,6 +20,7 @@ T_f = (b_f * ((diff(x_w,t) / l_w) - diff(theta_b, t)));
 T_m = (K_t / R_m) * v_m - (K_e * K_t / R_m) * ((diff(x_w,t) / l_w) - diff(theta_b, t)); 
 
 % Non-Linear EOM of Wheel Dynamics
+
 eq1_left  = ((I_w / l_w) + l_w * m_b + l_w * m_w) * x_w_ddot;
 eq1_right = - m_b * l_b * l_w * theta_b_ddot * cos(theta_b) + m_b * l_b * l_w * (theta_b_dot^2) * sin(theta_b) - T_f + T_m;
 eq1 = eq1_left == eq1_right;
@@ -84,6 +85,7 @@ A = [0, 1, 0, 0;
     A_acc(1, :);
     0, 0, 0, 1;
     A_acc(2, :)];
+
 B_acc = T \ Beta;
 
 B = [0;
@@ -108,7 +110,7 @@ sys = ss(A, B, C, D);
 % State-Space to Transfer Function G(s)
 [num, den] = ss2tf(A, B, C, D);
 G = tf(num, den);
-
+G = sys;
 % Poles of the system (roots of the denominator)
 system_poles = pole(G);
 pole(G)
@@ -118,7 +120,7 @@ system_zeros = zero(G);
 
 % check it
 disp('Transfer Function G(s):');
-G
+
 
 Co = ctrb(A, B);
 uncontrollable_states = length(A) - rank(Co)
@@ -126,63 +128,46 @@ uncontrollable_states = length(A) - rank(Co)
 %% 3.5 Design a PID controller stabilizing the TF
 disp('3.5 Designing the PID controller stabilizing the TF')
 
-% 3rd-order reduced TF
-[num_raw, den_raw] = tfdata(G, 'v');
-num_raw(abs(num_raw) < 1e-9) = 0;
-den_raw(abs(den_raw) < 1e-9) = 0;
+G_min = minreal(G);
 
-num_red = num_raw(1:end-1); % [0, -90.03, 0, 0]
-den_red = den_raw(1:end-1); % [1, 475, -62.02, -15370]
 
-% Normalize denominator to monic if needed
-lead_den = den_red(1);
-num_red = num_red / lead_den;
-den_red = den_red / lead_den;
+[num_g, den_g] = tfdata(G_min, 'v');
 
-G_red = tf(num_red, den_red);
+% Koefficienter i G_min(s) = (b1*s) / (s^3 + a2*s^2 + a1*s + a0)
+% DETTA PLOCKAR BARA UT NUMMER FRÅN G
+b1 = num_g(3); % -90.03
+a2 = den_g(2); % 475
+a1 = den_g(3); % -62.02
+a0 = den_g(4); % -1.537e4
 
-% Keep stable open-loop poles (Re < 0), mirror unstable poles (Re > 0)
-p_ol = pole(G_red);
-stable_poles = p_ol(real(p_ol) < 0);
-mirrored_unstable_poles = -p_ol(real(p_ol) > 0);
-desired_poles = [stable_poles(:); mirrored_unstable_poles(:)];
+%väljer roliga poler typ
 
-assert(numel(desired_poles) == 3, ...
-    'Expected 3 desired poles for 3rd-order matching, got %d.', numel(desired_poles));
 
-% Target monic polynomial: s^3 + alpha1*s^2 + alpha2*s + alpha3
-A_des = poly(desired_poles);
+%what rise time we want
+tr_risetime = 0.25;
 
-% Solve for Kd, Kp, Ki
-% PID terms enter at s^2, s^1, s^0 scaled by b1.
-b1 = num_red(end - 1);
-assert(abs(b1) > 1e-9, 'Reduced s^1 numerator coefficient is too close to zero.');
+%Zeta = undampened rise time should be between 0 < Zeta < 1 (KOLLA BOKEN)
+Zeta = 0.7;
+%Omega_n = Undampened natural frequency
+Omega_n = (pi - acos(Zeta)) / (tr_risetime * sqrt(1 - Zeta^2));
 
-a1 = den_red(2);
-a2 = den_red(3);
-a3 = den_red(4);
+p1 = -Zeta*Omega_n + 1j*Omega_n*sqrt(1 - Zeta^2);
+p2 = -Zeta*Omega_n - 1j*Omega_n*sqrt(1 - Zeta^2);
+p3 = -475.0690;
 
-Kd_val = (A_des(2) - a1) / b1;
-Kp_val = (A_des(3) - a2) / b1;
-Ki_val = (A_des(4) - a3) / b1;
 
-fprintf('Kp_val = %.4f | Ki_val = %.4f | Kd_val = %.4f\n', Kp_val, Ki_val, Kd_val);
 
-% Verify closed-loop roots
-cl_char_poly = [1, a1 + b1*Kd_val, a2 + b1*Kp_val, a3 + b1*Ki_val];
-cl_roots = roots(cl_char_poly);
-disp('Controlled closed-loop roots:');
-disp(cl_roots);
+%Bilda vårat ROLIGA tredje grads polynom av polerna som vi valt
+%s^3 + alpha2*s^2 + alpha1*s + alpha0
+P_des = poly([p1, p2, p3]); %bildar (s-p1)(s-p2)(s-p3)
+alpha2 = P_des(2);
+alpha1 = P_des(3);
+alpha0 = P_des(4);
 
-if all(real(cl_roots) < 0)
-    disp('Status: All 3 controlled roots have negative real part.');
-else
-    warning('At least one controlled root has Re(s) >= 0.');
-end
-
-% Build PID controller and closed-loop TF
-C_pid = pid(Kp_val, Ki_val, Kd_val);
-T_closed = feedback(C_pid * G, 1);
+% 3. Lös ut Kp, Ki och Kd
+Kd_val = (alpha2 - a2) / b1;
+Kp_val = (alpha1 - a1) / b1;
+Ki_val = (alpha0 - a0) / b1;
 
 %% 3.6 Model the effect of disturbing the robot
 disp('3.6 Modelling the effect of disturbing the robot')
@@ -201,7 +186,7 @@ D_bd = zeros(4, 2);
 disp('3.7 Checking if everything is working as it should be')
 
 % Simulate LabA_LinearizedBot
-simOut = sim('LabA_LinearizedBot');
+%simOut = sim('LabA_LinearizedBot');
 
 % % Closed-loop step/impulse check
 % figure('Name', '3.7 Closed-Loop Check');
@@ -209,7 +194,7 @@ simOut = sim('LabA_LinearizedBot');
 % step(T_closed);
 % title('Closed-Loop Step Response (T\_closed)');
 % grid on;
-% 
+
 % subplot(2,1,2);
 % impulse(feedback(G, C_pid));
 % title('Disturbance-to-Output Impulse Response');
@@ -218,21 +203,18 @@ simOut = sim('LabA_LinearizedBot');
 %% 3.8 Convert the controller to the discrete domain
 disp('3.8 Converting the controller to the discrete domain')
 
-% Use G_red
 C_cont = pid(Kp_val, Ki_val, Kd_val);
-T_cl = feedback(C_cont * G_red, 1);
-
+T_cl = feedback(C_cont * G_min, 1);
+T_cl_stepinfo = feedback(C_cont * G(1), 1);
+stepinfo(T_cl_stepinfo)
+step(T_cl_stepinfo)
 wb = bandwidth(T_cl); % Bandwidth in rad/s
-fprintf('Closed-loop bandwidth wb = %.4f rad/s\n', wb);
 
 samplingstime = 2*pi / (20 * wb);
-fprintf('Calculated sampling time Ts = %.6f s\n', samplingstime);
+
+
 
 % figure('Name', '3.8 Closed-Loop Bode Plot');
-% bodeplot(T_cl);
+ %bodeplot(T_cl); %kanske inte behövs då vi får samplingtime av 2*pi/(20*bandwidth)
 % grid on;
-% 
-% % Discretize the continuous PID controller
-% C_disc = c2d(C_cont, samplingstime, 'tustin');
-% disp('Discrete PID controller C_disc(z):');
-% C_disc
+ 
